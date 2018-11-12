@@ -3,10 +3,243 @@
 <head>
 </head>
 <body>
-  <p>yes</p>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
-  <script>
-    var socket = io();
-  </script>
+
+
+      <!-- Title Bar -->
+      <header style= "background-color:#a7caa8;  margin:0; padding:50;">
+          <p style="vertically-align:text-top; text-align:center; margin:0;">JSON Validator</p>
+      </header>
+
+     <!-- Input Form Bar -->
+      <header style= "background-color:#f6fef7;  margin:0; padding:100; ">
+
+          <p style= "margin:0;">JSON:</p>
+          <p id= "Error_JSON"></p>
+          <input id="JSON_OBJECT" type="text">
+          <button id="submit1" type="button">Submit</button>
+          <p style= "margin:0;">KEY:</p>
+          <p id= "Error_KEY"></p>
+          <input id="KEY_OBJECT" type="text">
+          <button id="submit2" type="button">Submit</button>
+
+      </header>
+
+      <!-- Update Channel Header-->
+      <header style= "background-color:#a7caa8; margin:0; padding:35;">
+        <p style="vertically-align:text-top; text-align:center; margin:0;">Update Channel</p>
+      </header>
+
+      <!-- Update Channel Content-->
+      <header style= "background-color:#f6fef7; margin:0; padding:100;">
+        <p id="UpdateStream" style="vertically-align:text-top; text-align:center; margin:0;"></p>
+      </header>
+
+
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
+       <script>
+         //JavaScript part that contains the program's functionality
+
+         //setup connection between server and client
+         var socket = io();
+
+         //we store the data into the object array so we don't need to read the file to access previously entered JSON objects
+         var OBJ_ARRAY = new Array();
+
+         //this function checks if the JSON input is valid or not
+         function CheckVaildJSON (JSON_COMMAND){
+
+           // we use 2 stacks to check that the JSON is using the same number of opening braces as closing braces,
+           //and the JSON is using the right number of quotations at the right places
+           var SyntaxStack = new Array();
+           var QuoteStack = new Array();
+
+           //the size variables of the stacks
+           var quote_stack_count = 0;
+           var stack_count = 0;
+
+           //the index of where we are in the JSON string
+           var char_count = 0;
+
+           //how long is the JSON string
+           var JSON_length = JSON_COMMAND.length -1;
+
+           //check 1st brace
+           if( JSON_COMMAND[0] == "{"){
+             //we push onto the stack that there is a starting brace
+             SyntaxStack[0] = "{";
+             stack_count++;
+           }else{
+             return false;
+           }
+
+           //check last brace
+           if( JSON_COMMAND[JSON_length] == "}"){
+             //good we found the complimantary brace
+             //erase from stack
+             stack_count--;
+             SyntaxStack[stack_count]=undefined;
+          }else{
+            //wrong brace, invalid JSON code
+            return false;
+          }
+
+
+           //already checktd 0th element, and nth element
+           //increment to 1 to check 1st to n-1 element in the proceeding loop
+           char_count++;
+
+           //use 2 stacks to check for the right number of curly braces, brackets and quotations
+           while ( char_count < JSON_length ) {
+
+               //for forward curly braces and forward square braces, push onto the stack
+
+               if( JSON_COMMAND[char_count] == "{" && JSON_COMMAND[char_count-1] != "\\"){
+                 SyntaxStack[stack_count] = "{";
+                 stack_count++;
+
+                 QuoteStack[quote_stack_count] = "{";
+                 quote_stack_count++;
+
+               }else if (JSON_COMMAND[char_count] == "[" && JSON_COMMAND[char_count-1] != "\\"){
+                 SyntaxStack[stack_count] = "[";
+                 stack_count++;
+
+                 QuoteStack[quote_stack_count] = "[";
+                 quote_stack_count++;
+
+                 //for backward } and ], pop the compilmentary brace off the stacks
+                 //if the two adjacent elements of the stack are not compliments of each other
+                 //ex: {] or [} then we have bad JSON code
+
+               }else if(JSON_COMMAND[char_count] == "]" && JSON_COMMAND[char_count-1] != "\\"){
+                 if ( stack_count > 0 && SyntaxStack[stack_count-1] == "[" ){
+                    //good we found the complimantary brace
+                    //erase from stack
+                    stack_count--;
+                    SyntaxStack[stack_count]=undefined;
+                 }else{
+                   //wrong brace, onvalid JSON code
+                   return false;
+                 }
+               }else if(JSON_COMMAND[char_count] == "}" && JSON_COMMAND[char_count-1] != "\\"){
+                 if ( stack_count > 0 && SyntaxStack[stack_count-1] == "{" ){
+                    //good we found the complimantary brace
+                    //erase from stack
+                    stack_count--;
+                    SyntaxStack[stack_count]=undefined;
+                 }else{
+                   //wrong brace, onvalid JSON code
+                   return false;
+                 }
+               }
+
+
+               //we add quotations onto the stack
+
+               if (JSON_COMMAND[char_count] == "\"" && JSON_COMMAND[char_count-1] != "\\"){
+                 QuoteStack[quote_stack_count] = "\"";
+                 quote_stack_count++;
+               }
+
+               //if we are faced with a colon or a comma, we check if the 2 previous elements on the stack are quotations,
+               //if not, then that is bad JSON code
+               //if they are we check the quotes have a { , or [ to the left of them}
+
+               if (JSON_COMMAND[char_count] == ":" && JSON_COMMAND[char_count-1] != "\\"){
+                 if ((QuoteStack[quote_stack_count-3] != "{" || QuoteStack[quote_stack_count-3] != ",") && QuoteStack[quote_stack_count-2] != "\"" && QuoteStack[quote_stack_count-1] != "\"" ){
+                   return false;
+                 }
+                   QuoteStack[quote_stack_count-1] = undefined;
+                   QuoteStack[quote_stack_count-2] = undefined;
+                   quote_stack_count -= 2;
+               } else if (JSON_COMMAND[char_count] == "," && JSON_COMMAND[char_count-1] != "\\"){
+                 if ((QuoteStack[quote_stack_count-3] != ":" || QuoteStack[quote_stack_count-3] != "[") && QuoteStack[quote_stack_count-2] != "\"" && QuoteStack[quote_stack_count-1] != "\"" ){
+                   return false;
+                 }
+                   QuoteStack[quote_stack_count-1] = undefined;
+                   QuoteStack[quote_stack_count-2] = undefined;
+                   quote_stack_count -= 2;
+               }
+
+               char_count++;
+
+           }
+
+           if ( stack_count != 0 ){
+              //improper number of braces
+              return false;
+           }
+
+           if (  QuoteStack[0] != "\"" &&  QuoteStack[1] != "\""){
+             //we should ideally end with a single set of quotes left in the stack
+             return false;
+           }
+
+           //none of our test cases have found anything wwrong, return true
+           return true;
+
+         }
+
+
+         function ProgramMain1 (){
+           //insert a new JSON object
+           if(JSON_COMMAND.value != undefined){
+               //send to function to check validity
+               if (CheckVaildJSON(JSON_COMMAND.value) == true){
+
+                 //reset any error message
+                 document.getElementById("Error_JSON").innerHTML = "";
+
+                 //JSON object is valid, emit the signal and data to the server
+                 socket.emit('JSON_INSERT',{json:JSON_COMMAND.value});
+
+                 //put the JSON value into a JS object for quick access
+                 OBJ_ARRAY = JSON.parse(JSON_COMMAND.value);
+
+                 //wrtite the JSON object into the .txt file
+
+               }else{
+                 document.getElementById("Error_JSON").innerHTML = "INVALID JSON";
+               }
+
+
+               //reset the value of the JSON command
+               JSON_COMMAND.value = "";
+           }
+         }
+
+
+           function ProgramMain2 (){
+             //get object by Key
+              if(KEY_COMMAND.value != undefined){
+                if (OBJ_ARRAY.KEY_COMMAND == undefined) {
+                  document.getElementById("Error_KEY").innerHTML = "NO VALUE EXISTS AT THAT KEY";
+                }else {
+                  document.getElementById("Error_KEY").innerHTML = "";
+
+                  socket.emit('KEY_FIND',{key:KEY_COMMAND.value,value:OBJ_ARRAY[KEY_COMMAND].value});
+                }
+              }
+            }
+
+
+         //fill the corresponding variables up with input from the html form
+         var JSON_COMMAND = document.getElementById("JSON_OBJECT");
+         var KEY_COMMAND = document.getElementById("KEY_OBJECT");
+         var ButtonHandler = document.getElementById("submit1").addEventListener("click", ProgramMain1 );
+         var ButtonHandler = document.getElementById("submit2").addEventListener("click", ProgramMain2 );
+
+
+
+         socket.on('JSON_INSERT',function(data){
+             document.getElementById("UpdateStream").innerHTML += "<p>" + data.json + "</p>";
+         });
+
+         socket.on('KEY_FIND',function(data){
+             document.getElementById("UpdateStream").innerHTML += "<p> VALUE AT KEY: " + data.key + " is: " + data.value +"</p>";
+         });
+
+       </script>
+
 </body>
 </html>
