@@ -3,7 +3,8 @@ Coding Challenge Before Interview
 
 Note, due to time I was not able to get the writing to a .txt file implemented.
 My original intention was to use an JavaScript array that would first read the .txt file then
-append any new JSON inputs into that array and use that array for querying for JSON values at any key given.
+append any new JSON inputs into that array and use that array for querying for JSON values at any key given to
+improve efficiency of the program and then to write to the .txt after the JSON data was in the array.
 
 I was only able to get an array working with all the JSON values.
 
