@@ -1,0 +1,23 @@
+{
+  "name": "arkparadigmcodeproject",
+  "version": "1.0.0",
+  "description": "Coding Challenge Before Interview",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shwapneel/ArkParadigmCodeProject.git"
+  },
+  "author": "Shwapneel Ishraq",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shwapneel/ArkParadigmCodeProject/issues"
+  },
+  "homepage": "https://github.com/shwapneel/ArkParadigmCodeProject#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.1.1"
+  }
+}
