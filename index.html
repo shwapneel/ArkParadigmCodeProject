@@ -13,13 +13,18 @@
      <!-- Input Form Bar -->
       <header style= "background-color:#f6fef7;  margin:0; padding:100; ">
 
+          <!-- form for finding JSON code -->
           <p style= "margin:0;">JSON:</p>
           <p id= "Error_JSON"></p>
           <input id="JSON_OBJECT" type="text">
+          <!-- Submit button for JSON code -->
           <button id="submit1" type="button">Submit</button>
+
+          <!-- form for finding KEY code -->
           <p style= "margin:0;">KEY:</p>
           <p id= "Error_KEY"></p>
           <input id="KEY_OBJECT" type="text">
+          <!-- Submit button for finding JSON Key code -->
           <button id="submit2" type="button">Submit</button>
 
       </header>
@@ -43,7 +48,21 @@
          var socket = io();
 
          //we store the data into the object array so we don't need to read the file to access previously entered JSON objects
-         var OBJ_ARRAY = new Array();
+         var OBJ_ARRAY;
+
+
+
+          //fill the corresponding variables up with input from the html form
+          var JSON_COMMAND = document.getElementById("JSON_OBJECT");
+          var KEY_COMMAND = document.getElementById("KEY_OBJECT");
+          var ButtonHandler = document.getElementById("submit1").addEventListener("click", ProgramMain1 );
+          var ButtonHandler = document.getElementById("submit2").addEventListener("click", ProgramMain2 );
+
+
+
+
+
+
 
          //this function checks if the JSON input is valid or not
          function CheckVaildJSON (JSON_COMMAND){
@@ -181,6 +200,12 @@
          }
 
 
+
+
+
+
+
+         //ProgramMain1 controls the JSON validation part of the program
          function ProgramMain1 (){
            //insert a new JSON object
            if(JSON_COMMAND.value != undefined){
@@ -209,34 +234,44 @@
          }
 
 
+
+
+
+
+
+
+          //ProgramMain2 controls the Key searching part of the program
            function ProgramMain2 (){
              //get object by Key
-              if(KEY_COMMAND.value != undefined){
-                if (OBJ_ARRAY.KEY_COMMAND == undefined) {
+             var key = KEY_COMMAND.value;
+             //make sure we have a key to search for
+              if(key != undefined){
+                //search key inside the JSON array
+                if (OBJ_ARRAY[key] == undefined) {
+                  //erroe message
                   document.getElementById("Error_KEY").innerHTML = "NO VALUE EXISTS AT THAT KEY";
                 }else {
+                  //reset any previous error message
                   document.getElementById("Error_KEY").innerHTML = "";
-
-                  socket.emit('KEY_FIND',{key:KEY_COMMAND.value,value:OBJ_ARRAY[KEY_COMMAND].value});
+                  //signal to the server the data we have
+                  socket.emit('KEY_FIND',{key:KEY_COMMAND.value,value:OBJ_ARRAY[key]});
                 }
               }
             }
 
 
-         //fill the corresponding variables up with input from the html form
-         var JSON_COMMAND = document.getElementById("JSON_OBJECT");
-         var KEY_COMMAND = document.getElementById("KEY_OBJECT");
-         var ButtonHandler = document.getElementById("submit1").addEventListener("click", ProgramMain1 );
-         var ButtonHandler = document.getElementById("submit2").addEventListener("click", ProgramMain2 );
 
-
-
+         //output to all clients on the server the JSON object inputted
          socket.on('JSON_INSERT',function(data){
              document.getElementById("UpdateStream").innerHTML += "<p>" + data.json + "</p>";
          });
 
+
+
+
+         //output to all clients on the server the value at the key entered inputted
          socket.on('KEY_FIND',function(data){
-             document.getElementById("UpdateStream").innerHTML += "<p> VALUE AT KEY: " + data.key + " is: " + data.value +"</p>";
+             document.getElementById("UpdateStream").innerHTML += "<p> Value at key: " + data.key + " is: " + data.value +"</p>";
          });
 
        </script>

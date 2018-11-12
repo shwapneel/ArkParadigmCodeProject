@@ -15,6 +15,7 @@ io.on('connection',function(socket){
        //send the JSON command to all clients in the Update channel
        io.sockets.emit('JSON_INSERT',data);
        //add the JSON code to the end of the file
+       //NOTE: I was not able to get the program to write to a .txt file on time
       // fs.appendFile('JSON.txt', data )
     });
 
